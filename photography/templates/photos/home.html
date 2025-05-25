@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Photo Gallery - Share Your Beautiful Moments{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Capture and Share Your Moments</h1>
+            <p>Join our community of photographers to share your best shots and discover amazing photos from around the world.</p>
+            {% if not user.is_authenticated %}
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg">Sign Up</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Log In</a>
+                </div>
+            {% else %}
+                <a href="{% url 'photo_create' %}" class="btn btn-light btn-lg">Upload a Photo</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Featured Photos Section -->
+    <section class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-center mb-4">Featured Photos</h2>
+            </div>
+        </div>
+
+        {% if photos %}
+            <div class="row gallery-container">
+                {% for photo in photos %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <a href="{% url 'photo_detail' photo.id %}">
+                                <img src="{{ photo.image.url }}" class="card-img-top" alt="{{ photo.title }}">
+                            </a>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ photo.title }}</h5>
+                                <p class="card-text text-muted">
+                                    <small>
+                                        <i class="fas fa-user"></i> 
+                                        <a href="{% url 'user_photos' photo.user.username %}" class="text-decoration-none">
+                                            {{ photo.user.username }}
+                                        </a>
+                                        <span class="ms-2">
+                                            <i class="fas fa-heart text-danger"></i> {{ photo.like_count }}
+                                        </span>
+                                        <span class="ms-2">
+                                            <i class="fas fa-comment text-primary"></i> {{ photo.comment_count }}
+                                        </span>
+                                    </small>
+                                </p>
+                                <a href="{% url 'photo_detail' photo.id %}" class="btn btn-outline-primary btn-sm">View Photo</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'photo_list' %}" class="btn btn-primary">View All Photos</a>
+            </div>
+        {% else %}
+            <div class="text-center my-5">
+                <h3>No photos uploaded yet!</h3>
+                <p>Be the first to upload a photo.</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'photo_create' %}" class="btn btn-primary">Upload Now</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Login to Upload</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Join Section -->
+    <section class="container my-5 py-5">
+        <div class="row">
+            <div class="col-md-6 offset-md-3 text-center">
+                <h2>Join Our Photography Community</h2>
+                <p class="lead mb-4">Share your photos, get feedback, and connect with other photographers from around the world.</p>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-dark btn-lg">Create an Account</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+ 

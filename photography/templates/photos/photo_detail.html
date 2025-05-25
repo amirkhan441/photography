@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ photo.title }}{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Like functionality with AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const likeBtn = document.getElementById('like-btn');
+        
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                fetch(this.getAttribute('href'), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const likeIcon = document.getElementById('like-icon');
+                    const likeCount = document.getElementById('like-count');
+                    
+                    if (data.liked) {
+                        likeIcon.classList.remove('not-liked');
+                        likeIcon.classList.add('liked');
+                    } else {
+                        likeIcon.classList.remove('liked');
+                        likeIcon.classList.add('not-liked');
+                    }
+                    
+                    likeCount.textContent = data.like_count;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Photo Column -->
+        <div class="col-lg-8">
+            <img src="{{ photo.image.url }}" class="img-fluid photo-detail-img mb-4" alt="{{ photo.title }}">
+            
+            <!-- Photo Actions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <form action="{% url 'like_photo' photo.id %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="like-btn" id="like-btn" href="{% url 'like_photo' photo.id %}">
+                            <i id="like-icon" class="fas fa-heart {% if user_has_liked %}liked{% else %}not-liked{% endif %}"></i>
+                            <span id="like-count">{{ photo.like_count }}</span>
+                        </button>
+                    </form>
+                    <span class="ms-3">
+                        <i class="fas fa-comment text-primary"></i>
+                        {{ photo.comments.count }}
+                    </span>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div>
+                        <a href="{% url 'download_photo' photo.id %}" class="btn btn-success action-btn download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                        
+                        {% if user == photo.user %}
+                            <a href="{% url 'photo_update' photo.id %}" class="btn btn-outline-secondary action-btn ms-2">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'photo_delete' photo.id %}" class="btn btn-outline-danger action-btn ms-2">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Details Column -->
+        <div class="col-lg-4">
+            <div class="detail-card bg-white mb-4">
+                <h1 class="h2 mb-3">{{ photo.title }}</h1>
+                
+                <p class="text-muted">
+                    <i class="fas fa-user"></i>
+                    <a href="{% url 'user_photos' photo.user.username %}" class="text-decoration-none">
+                        {{ photo.user.username }}
+                    </a>
+                </p>
+                
+                <p class="mb-3">
+                    <i class="fas fa-calendar-alt text-muted"></i>
+                    <small class="text-muted">{{ photo.created_at|date:"F d, Y" }}</small>
+                </p>
+                
+                {% if photo.description %}
+                    <h5 class="mt-4">Description</h5>
+                    <p>{{ photo.description }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Comments Section -->
+            <div class="detail-card bg-white">
+                <h4 class="mb-3">Comments</h4>
+                
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'add_comment' photo.id %}">
+                        {% csrf_token %}
+                        {{ comment_form.text }}
+                        <button type="submit" class="btn btn-primary mt-2">Comment</button>
+                    </form>
+                    <hr>
+                {% endif %}
+                
+                {% if photo.comments.all %}
+                    <div class="comments-section">
+                        {% for comment in photo.comments.all %}
+                            <div class="comment">
+                                <p class="mb-1">{{ comment.text }}</p>
+                                <div class="d-flex justify-content-between">
+                                    <p class="comment-user mb-0">{{ comment.user.username }}</p>
+                                    <p class="comment-date mb-0">{{ comment.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
